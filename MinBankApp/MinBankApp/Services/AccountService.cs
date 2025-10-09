@@ -1,10 +1,16 @@
+using System.Runtime.CompilerServices;
+using MinBankApp.Domain;
+
 namespace MinBankApp.Services;
 
 public class AccountService : IAccountService
 {
-    public IBankAccount CreateAccount(string name, string currency, decimal initialBalance)
+    private readonly List<IBankAccount> _accounts;
+    public IBankAccount CreateAccount(string name, AccountType accountType, string currency, decimal initialBalance)
     {
-        throw new NotImplementedException();
+        var account = new BankAccount(name, accountType, currency, initialBalance);
+        _accounts.Add(account);
+        return account;
     }
 
     public List<IBankAccount> GetAccounts()
