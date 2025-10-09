@@ -5,13 +5,14 @@
 <EditForm Model="_model" OnValidSubmit="CreateAccountAsync">
     <DataAnnotationsValidator />
     <ValidationSummary />
-    
+   
     <!-- RUTA för kontonamn -->
-    <div>
+    <div className="mb-2">
         <label>Kontonamn</label>
         <InputText @bind-Value="_model.Name" />
     </div>
-    <div>
+    <div class="mb-2">
+
         <!-- RUTA för kontotyp -->
         <label>Kontotyp</label>
         <InputSelect @bind-Value="_model.Type">
@@ -19,7 +20,8 @@
             <option value="@AccountType.Deposit">Baskonto</option>
             <option value="@AccountType.Savings">Sparkonto</option>
         </InputSelect>
-    </div>
+    </div class="mb-2">
+
     <!-- RUTA för valuta -->
     <div>
         <label>Valuta</label>
@@ -29,12 +31,14 @@
                 <option value="@currency">@currency</option>
             }
         </InputSelect>
-    </div>
+    </div class="mb-2">
+    
     <!-- RUTA för Start saldo -->
     <div>
         <label>Start saldo</label>
         <InputNumber @bind-Value="_model.InitialBalance" />
-    </div>
+    </div class="mb-2">
+    
     <!-- Knapp för skapa -->
     <button type="submit">Skapa</button>
 </EditForm>
