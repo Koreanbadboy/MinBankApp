@@ -5,11 +5,14 @@
 <EditForm Model="_model" OnValidSubmit="CreateAccountAsync">
     <DataAnnotationsValidator />
     <ValidationSummary />
+    
+    <!-- RUTA för kontonamn -->
     <div>
         <label>Kontonamn</label>
         <InputText @bind-Value="_model.Name" />
     </div>
     <div>
+        <!-- RUTA för kontotyp -->
         <label>Kontotyp</label>
         <InputSelect @bind-Value="_model.Type">
             <option value="">Välj kontotyp!</option>
@@ -17,16 +20,25 @@
             <option value="@AccountType.Savings">Sparkonto</option>
         </InputSelect>
     </div>
+    <!-- RUTA för valuta -->
     <div>
         <label>Valuta</label>
-        <InputText @bind-Value="_model.Currency" />
+        <InputSelect @bind-Value="_model.Currency">
+            @foreach (var currency in Enum.GetValues<CurrencyType>())
+            {
+                <option value="@currency">@currency</option>
+            }
+        </InputSelect>
     </div>
+    <!-- RUTA för Start saldo -->
     <div>
         <label>Start saldo</label>
         <InputNumber @bind-Value="_model.InitialBalance" />
     </div>
+    <!-- Knapp för skapa -->
     <button type="submit">Skapa</button>
 </EditForm>
+
 
 @code {
     private CreateAccountModel _model = new();
@@ -40,15 +52,14 @@
             _model.InitialBalance
         );
     }
-
-
-
+    
     private class CreateAccountModel
     {
         public string Name { get; set; }
         public AccountType Type { get; set; }
         public string Currency { get; set; }
         public decimal InitialBalance { get; set; }
+        private string _message;
 
         public void Clear()
         {
