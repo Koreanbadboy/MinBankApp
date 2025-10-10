@@ -7,7 +7,7 @@
     <ValidationSummary />
    
     <!-- RUTA för kontonamn -->
-    <div className="mb-2">
+    <div class="mb-2">
         <label>Kontonamn</label>
         <InputText @bind-Value="_model.Name" />
     </div>
@@ -20,41 +20,82 @@
             <option value="@AccountType.Deposit">Baskonto</option>
             <option value="@AccountType.Savings">Sparkonto</option>
         </InputSelect>
-    </div class="mb-2">
+    </div>
 
     <!-- RUTA för valuta -->
-    <div>
+    <div class="mb-2">
         <label>Valuta</label>
-        <InputSelect @bind-Value="_model.Currency">
+        <InputSelect @bind-Value="_model.Currency" TValue="string">
             @foreach (var currency in Enum.GetValues<CurrencyType>())
             {
-                <option value="@currency">@currency</option>
+                <option value="@currency.ToString()">@currency</option>
             }
         </InputSelect>
-    </div class="mb-2">
-    
+    </div>
+
     <!-- RUTA för Start saldo -->
-    <div>
+    <div class="mb-2">
         <label>Start saldo</label>
         <InputNumber @bind-Value="_model.InitialBalance" />
-    </div class="mb-2">
+    </div>
     
     <!-- Knapp för skapa -->
     <button type="submit">Skapa</button>
 </EditForm>
 
+<!-- Lägg till alla konton -->
+
+<h4>Alla konton</h4>
+@if (_accounts.Count == 0)
+{
+    <p>Det finns inga konto, registrera ditt första konto ovan.</p>
+}
+else
+{
+    <ul>
+        @foreach (var account in _accounts)
+        {
+            <li>
+                <strong>@account.Name</strong> - @account.Balance - @account.Currency
+                <small>(uppdaterad @account.LastUpdated.ToLocalTime())</small>
+            </li>
+        }
+    </ul>
+}
 
 @code {
     private CreateAccountModel _model = new();
+    private List<IBankAccount> _accounts = new();
 
-    private void CreateAccountAsync()
+    protected override void OnInitialized()
     {
-        AccountService.CreateAccount(
-            _model.Name,
-            _model.Type,
-            _model.Currency,
-            _model.InitialBalance
-        );
+        _accounts = AccountService.GetAccounts().ToList();
+        base.OnInitialized();
+    }
+
+    private Task CreateAccountAsync()
+    {
+        try
+        {
+            Console.WriteLine(_model.Name);
+            
+            AccountService.CreateAccount(
+                _model.Name,
+                _model.Type,
+                _model.Currency,
+                _model.InitialBalance
+            );
+                
+            _accounts = AccountService.GetAccounts().ToList();
+            _model.Clear();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+
+        return Task.CompletedTask;
     }
     
     private class CreateAccountModel
