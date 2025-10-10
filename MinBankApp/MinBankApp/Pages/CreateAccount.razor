@@ -2,7 +2,7 @@
 @inject IAccountService AccountService
 
 <h3>Vänligen skapa ett konto</h3>
-<EditForm Model="_model" OnValidSubmit="CreateAccountAsync">
+<EditForm Model="_model" OnValidSubmit="CreateAccountAsync" FormName="CreateAccountForm">
     <DataAnnotationsValidator />
     <ValidationSummary />
    
@@ -25,14 +25,14 @@
     <!-- RUTA för valuta -->
     <div class="mb-2">
         <label>Valuta</label>
-        <InputSelect @bind-Value="_model.Currency" TValue="string">
+        <InputSelect @bind-Value="_model.Currency">
             @foreach (var currency in Enum.GetValues<CurrencyType>())
             {
-                <option value="@currency.ToString()">@currency</option>
+                <option value="@currency">@currency</option>
             }
         </InputSelect>
     </div>
-
+    
     <!-- RUTA för Start saldo -->
     <div class="mb-2">
         <label>Start saldo</label>
@@ -43,25 +43,27 @@
     <button type="submit">Skapa</button>
 </EditForm>
 
-<!-- Lägg till alla konton -->
+<!--Lägg till alla konton-->
 
 <h4>Alla konton</h4>
-@if (_accounts.Count == 0)
+@if(_accounts.Count == 0)
 {
-    <p>Det finns inga konto, registrera ditt första konto ovan.</p>
+    <p>Det finns inga konton ännu, registera ditt första konto!</p>
 }
 else
 {
     <ul>
-        @foreach (var account in _accounts)
+        @foreach(var account in _accounts)
         {
             <li>
-                <strong>@account.Name</strong> - @account.Balance - @account.Currency
-                <small>(uppdaterad @account.LastUpdated.ToLocalTime())</small>
+                <strong>@account.Name</strong> - @account.AccountType - @account.Balance - @account.Currency
+                <small>(Uppdaterad @account.LastUpdated.ToLocalTime())</small>
             </li>
         }
     </ul>
 }
+
+
 
 @code {
     private CreateAccountModel _model = new();
@@ -72,39 +74,40 @@ else
         _accounts = AccountService.GetAccounts().ToList();
         base.OnInitialized();
     }
-
     private Task CreateAccountAsync()
     {
         try
         {
             Console.WriteLine(_model.Name);
-            
+
             AccountService.CreateAccount(
                 _model.Name,
                 _model.Type,
                 _model.Currency,
                 _model.InitialBalance
             );
-                
+
             _accounts = AccountService.GetAccounts().ToList();
             _model.Clear();
         }
-        catch (Exception e)
+        catch(Exception exception)
         {
-            Console.WriteLine(e);
+            Console.WriteLine(exception);
             throw;
         }
 
+
         return Task.CompletedTask;
     }
-    
+
+
+
     private class CreateAccountModel
     {
         public string Name { get; set; }
         public AccountType Type { get; set; }
         public string Currency { get; set; }
         public decimal InitialBalance { get; set; }
-        private string _message;
 
         public void Clear()
         {
@@ -115,3 +118,4 @@ else
         }
     }
 }
+

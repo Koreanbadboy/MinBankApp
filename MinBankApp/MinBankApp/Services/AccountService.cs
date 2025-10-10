@@ -20,6 +20,6 @@ public class AccountService : IAccountService
 
     public List<IBankAccount> GetAccounts()
     {
-        throw new NotImplementedException();
+        return _accounts;
     }
 }
