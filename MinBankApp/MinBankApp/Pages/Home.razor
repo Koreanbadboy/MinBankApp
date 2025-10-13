@@ -2,17 +2,46 @@
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
-
-<button @onclick="HandleLogin">Logga in</button>
-
-@code {
-    private void HandleLogin()
+@if (!loggedIn)
+{
+    <h1>Välkommen till MinBankApp!</h1>
+    <div class="mb-3">
+        <label for="accessCode">Skriv kod för att komma in:</label>
+        <InputText id="accessCode" @bind-Value="inputCode" type="password" />
+    </div>
+    <button class="btn btn-primary" @onclick="CheckCode">Logga in</button>
+    @if (showError)
     {
-        // Här placerar du koden som ska köras när knappen klickas på
-        Console.WriteLine("Logga in-knappen har klickats!");
-        // ... här kommer din inloggningslogik
+        <div class="text-danger mt-2">Fel kod, försök igen!</div>
     }
 }
+else
+{
+    <h1>Du är inloggad!</h1>
+    <NavMenu />
+    <!-- lägg till resten av innehållet eller navigering -->
+}
 
-<p>Welcome to your new app.</p>
+<footer class="footer">
+    <p>Copyright 2025</p>
+</footer>
+
+@code {
+    private string inputCode = string.Empty;
+    private bool loggedIn = false;
+    private bool showError = false;
+    private const string CorrectCode = "1337"; // Ändra till önskad kod
+
+    private void CheckCode()
+    {
+        if (inputCode.Trim() == CorrectCode)
+        {
+            loggedIn = true;
+            showError = false;
+        }
+        else
+        {
+            showError = true;
+        }
+    }
+}

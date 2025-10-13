@@ -5,7 +5,7 @@ namespace MinBankApp.Interfaces;
 /// </summary>
 public interface IBankAccount
 {
-    Guid Id { get; }
+    Guid Id { get; set; }
     string Name { get; }
     public AccountType AccountType { get; }
     CurrencyType Currency { get; }

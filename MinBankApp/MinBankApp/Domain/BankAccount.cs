@@ -5,7 +5,7 @@ namespace MinBankApp.Domain;
 
 public class BankAccount : IBankAccount
 {
-    public Guid Id { get; private set; } = Guid.NewGuid();
+    public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; private set; } 
     public AccountType AccountType { get; private set; }
     public CurrencyType Currency { get; private set; } 

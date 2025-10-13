@@ -20,9 +20,9 @@ else
         <ValidationSummary />
 
         <!-- Från konto -->
-        <div class="mb-2">
-            <label>Från konto</label>
-            <InputSelect @bind-Value="_transferModel.FromAccountName">
+        <div class="mb-3" style="max-width: 400px;">
+            <label for="fromAccount" class="form-label">Från konto</label>
+            <InputSelect id="fromAccount" class="form-select" style="max-width: 100%;" @bind-Value="_transferModel.FromAccountName">
                 <option value="">Välj konto...</option>
                 @foreach (var a in _accounts)
                 {
@@ -32,9 +32,9 @@ else
         </div>
 
         <!-- Till konto -->
-        <div class="mb-2">
-            <label>Till konto</label>
-            <InputSelect @bind-Value="_transferModel.ToAccountName">
+        <div class="mb-3" style="max-width: 400px;">
+            <label for="toAccount" class="form-label">Till konto</label>
+            <InputSelect id="toAccount" class="form-select" style="max-width: 100%;" @bind-Value="_transferModel.ToAccountName">
                 <option value="">Välj konto...</option>
                 @foreach (var a in _accounts)
                 {
@@ -44,18 +44,18 @@ else
         </div>
 
         <!-- Belopp -->
-        <div class="mb-2">
-            <label>Belopp</label>
-            <InputNumber @bind-Value="_transferModel.Amount" />
+        <div class="mb-3" style="max-width: 400px;">
+            <label for="amount" class="form-label">Belopp</label>
+            <InputNumber id="amount" class="form-control" style="max-width: 100%;" @bind-Value="_transferModel.Amount" />
         </div>
 
         <!-- Beskrivning -->
-        <div class="mb-2">
-            <label>Beskrivning</label>
-            <InputText @bind-Value="_transferModel.Description" />
+        <div class="mb-3" style="max-width: 400px;">
+            <label for="description" class="form-label">Beskrivning</label>
+            <InputText id="description" class="form-control" style="max-width: 100%;" @bind-Value="_transferModel.Description" />
         </div>
 
-        <button type="submit">Genomför överföring</button>
+        <button type="submit" class="btn btn-success w-100" style="max-width: 400px;">Genomför överföring</button>
     </EditForm>
 }
 
@@ -87,8 +87,6 @@ else
             }
         </ul>
     </div>
-
-    
     
 
 @code {

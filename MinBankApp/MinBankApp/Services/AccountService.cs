@@ -37,4 +37,26 @@ public class AccountService : IAccountService
         await IsInitialized();
         return _accounts.Cast<IBankAccount>().ToList();
     }
+
+    public async Task DeleteAccount(Guid accountId)
+    {
+        await IsInitialized();
+        var account = _accounts.FirstOrDefault(a => a.Id == accountId);
+        if (account != null)
+        {
+            _accounts.Remove(account);
+            await SaveAsync();
+        }
+    }
+
+    public async Task UpdateAccount(BankAccount account)
+    {
+        await IsInitialized();
+        var idx = _accounts.FindIndex(a => a.Id == account.Id);
+        if (idx >= 0)
+        {
+            _accounts[idx] = account;
+            await SaveAsync();
+        }
+    }
 }

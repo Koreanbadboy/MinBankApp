@@ -2,7 +2,7 @@ namespace MinBankApp.Domain;
 
 public enum AccountType
 {
-    None,
-    Savings,
-    Deposit
+    None = 0,
+    Uttag = 1,
+    Spara = 2
 }
