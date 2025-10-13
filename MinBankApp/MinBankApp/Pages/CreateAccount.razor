@@ -2,51 +2,43 @@
 @using MinBankApp.Services
 @inject IAccountService AccountService
 
-
 <h3>Skapa nytt konto</h3>
-<EditForm Model="_model" OnValidSubmit="CreateAccountAsync" FormName="CreateAccountForm">
+<EditForm Model="_formModel" OnValidSubmit="CreateAccountAsync" FormName="CreateAccountForm">
     <DataAnnotationsValidator />
     <ValidationSummary />
 
     <!-- RUTA för kontonamn -->
     <div class="mb-2">
         <label>Kontonamn</label>
-        <InputText @bind-Value="_model.Name" />
+        <InputText @bind-Value="_formModel.Name" />
     </div>
     <div class="mb-2">
-
         <!-- RUTA för kontotyp -->
         <label>Kontotyp</label>
-        <InputSelect @bind-Value="_model.Type">
+        <InputSelect @bind-Value="_formModel.Type">
             <option value="">Välj kontotyp!</option>
-
             <option value="@AccountType.Deposit">Baskonto</option>
             <option value="@AccountType.Savings">Sparkonto</option>
         </InputSelect>
     </div>
-
     <!-- RUTA för valuta -->
     <div class="mb-2">
         <label>Valuta</label>
-        <InputSelect @bind-Value="_model.Currency">
+        <InputSelect @bind-Value="_formModel.Currency">
             @foreach (var currency in Enum.GetValues<CurrencyType>())
             {
                 <option value="@currency">@currency</option>
             }
         </InputSelect>
     </div>
-
     <!-- RUTA för Start saldo -->
     <div class="mb-2">
         <label>Start saldo</label>
-        <InputNumber @bind-Value="_model.InitialBalance" />
+        <InputNumber @bind-Value="_formModel.InitialBalance" />
     </div>
-
     <!-- Knapp för skapa -->
     <button type="submit">Skapa</button>
 </EditForm>
-
-<!--Lägg till alla konton-->
 
 <h4>Alla konton</h4>
 @if(_accounts.Count == 0)
@@ -67,33 +59,41 @@ else
 }
 
 @code {
-private CreateAccountModel _model = new();
-private List<IBankAccount> _accounts = new();
+    // Form model class
+    public class CreateAccountFormModel
+    {
+        public string Name { get; set; }
+        public AccountType Type { get; set; }
+        public CurrencyType Currency { get; set; }
+        public decimal InitialBalance { get; set; }
+    }
 
-protected override async Task OnInitializedAsync()
-{
-_model = await AccountService.LoadModelAsync();
-_accounts = await AccountService.GetAccounts();
-}
+    private CreateAccountFormModel _formModel = new();
+    private List<IBankAccount> _accounts = new();
 
-private async Task CreateAccountAsync()
-{
-try
-{
-var created = await AccountService.CreateAccount(
-_model.Name,
-_model.Type,
-_model.Currency,
-_model.InitialBalance
-);
-_accounts = await AccountService.GetAccounts();
-_model.Clear();
-await AccountService.SaveModelAsync(_model);
-StateHasChanged();
-}
-catch (Exception ex)
-{
-Console.Error.WriteLine(ex);
-}
-}
+    protected override async Task OnInitializedAsync()
+    {
+        _accounts = await AccountService.GetAccounts();
+    }
+
+    private async Task CreateAccountAsync()
+    {
+        try
+        {
+            var created = await AccountService.CreateAccount(
+                _formModel.Name,
+                _formModel.Type,
+                _formModel.Currency,
+                _formModel.InitialBalance
+            );
+            _accounts = await AccountService.GetAccounts();
+            // Reset form
+            _formModel = new CreateAccountFormModel();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex);
+        }
+    }
 }

@@ -1,11 +1,9 @@
 public class AccountService : IAccountService
 {
     private const string StorageKey = "bankapp.accounts";
-    private const string ModelKey = "CreateAccountModel";
     private readonly List<IBankAccount> _accounts;
     private readonly IStorageService _storageService;
     private bool isLoaded;
-    private CreateAccountModel _model = new();
 
     public AccountService(IStorageService storageService)
     {
@@ -38,19 +36,5 @@ public class AccountService : IAccountService
     {
         await IsInitialized();
         return _accounts.Cast<IBankAccount>().ToList();
-    }
-
-    public async Task<CreateAccountModel> LoadModelAsync()
-    {
-        var savedModel = await _storageService.GetItemAsync<CreateAccountModel>(ModelKey);
-        if (savedModel != null)
-            _model = savedModel;
-        return _model;
-    }
-
-    public Task SaveModelAsync(CreateAccountModel model)
-    {
-        _model = model;
-        return _storageService.SetItemAsync(ModelKey, model);
     }
 }
