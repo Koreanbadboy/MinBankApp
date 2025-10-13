@@ -5,7 +5,7 @@
 @inject ITransactionService TransactionService
 @inject IAccountService AccountService
 
-<h3>Ny betalning</h3>
+<h3>Ny betalning / Överföring</h3>
 
 @if (!_accounts.Any())
 {
@@ -15,13 +15,14 @@
 }
 else
 {
-    <EditForm Model="_model" OnValidSubmit="SaveAsync">
+    <EditForm Model="_transferModel" OnValidSubmit="TransferAsync">
         <DataAnnotationsValidator />
         <ValidationSummary />
 
+        <!-- Från konto -->
         <div class="mb-2">
-            <label>Konto</label>
-            <InputSelect @bind-Value="_model.AccountName">
+            <label>Från konto</label>
+            <InputSelect @bind-Value="_transferModel.FromAccountName">
                 <option value="">Välj konto...</option>
                 @foreach (var a in _accounts)
                 {
@@ -30,36 +31,77 @@ else
             </InputSelect>
         </div>
 
+        <!-- Till konto -->
+        <div class="mb-2">
+            <label>Till konto</label>
+            <InputSelect @bind-Value="_transferModel.ToAccountName">
+                <option value="">Välj konto...</option>
+                @foreach (var a in _accounts)
+                {
+                    <option value="@a.Name">@a.Name (@a.AccountType) – @a.Currency</option>
+                }
+            </InputSelect>
+        </div>
+
+        <!-- Belopp -->
         <div class="mb-2">
             <label>Belopp</label>
-            <InputNumber @bind-Value="_model.Amount" />
+            <InputNumber @bind-Value="_transferModel.Amount" />
         </div>
 
+        <!-- Beskrivning -->
         <div class="mb-2">
             <label>Beskrivning</label>
-            <InputText @bind-Value="_model.Description" />
+            <InputText @bind-Value="_transferModel.Description" />
         </div>
 
-        <button type="submit">Spara betalning</button>
+        <button type="submit">Genomför överföring</button>
     </EditForm>
 }
 
 @if (_transactions.Any())
 {
     <h4 class="mt-4">Alla betalningar</h4>
-    <ul>
-        @foreach (var t in _transactions)
-        {
-            <li>@t.Date.ToShortDateString() – <strong>@t.AccountName</strong> – @t.Amount – @t.Description</li>
-        }
-    </ul>
-}
+    @foreach (var t in _transactions.Where(t => t.AccountName == _transferModel.FromAccountName))
+    {
+        var account = _accounts.FirstOrDefault(a => a.Name == t.AccountName);
+        <li>
+            @t.Date.ToShortDateString() – <strong>@t.AccountName</strong> – @t.Amount @account?.Currency – @t.Description
+        </li>
+    }
+    
+    <!-- transaktionshistorik -->
+
+    <!-- transaktionshistorik -->
+
+    <div class="history-box" style="border:1px solid #ccc; padding:1em; margin-top:2em;">
+        <h5>Transaktionshistorik</h5>
+        <ul>
+            @foreach (var t in _transactions)
+            {
+                var account = _accounts.FirstOrDefault(a => a.Name == t.AccountName);
+                var action = t.Amount < 0 ? "överfört" : "mottagit";
+                <li>
+                    @t.Date.ToShortDateString() – <strong>@t.AccountName</strong> – @action – @t.Amount @account?.Currency – @t.Description
+                </li>
+            }
+        </ul>
+    </div>
+
+    
+    
 
 @code {
+    // List of accounts
     private List<IBankAccount> _accounts = new();
-    private Transaction _model = new();
+
+    // Model for transfer form
+    private TransferModel _transferModel = new();
+
+    // List of transactions
     private List<Transaction> _transactions = new();
 
+    // Load accounts and transactions on page load
     protected override async Task OnInitializedAsync()
     {
         // Fetch accounts asynchronously
@@ -69,11 +111,27 @@ else
         _transactions = await TransactionService.GetAllAsync();
     }
 
-
-    private async Task SaveAsync()
+    // Genomför överföring mellan konton
+    private async Task TransferAsync()
     {
-        await TransactionService.CreateAsync(_model);
-        _transactions = await TransactionService.GetAllAsync(); 
-        _model = new Transaction(); // nollställ formuläret
+        await TransactionService.TransferAsync(
+            _transferModel.FromAccountName,
+            _transferModel.ToAccountName,
+            _transferModel.Amount,
+            _transferModel.Description
+        );
+        _transactions = await TransactionService.GetAllAsync();
+        _transferModel = new TransferModel(); // reset form
     }
+
+
+    // Modell för överföring
+    public class TransferModel
+    {
+        public string FromAccountName { get; set; }
+        public string ToAccountName { get; set; }
+        public decimal Amount { get; set; }
+        public string Description { get; set; }
+    }
+}
 }
