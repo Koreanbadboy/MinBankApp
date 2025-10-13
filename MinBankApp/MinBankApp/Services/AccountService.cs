@@ -1,17 +1,12 @@
-using System.Runtime.CompilerServices;
-using MinBankApp.Domain;
-
-namespace MinBankApp.Services;
-
 public class AccountService : IAccountService
 {
-    
     private const string StorageKey = "bankapp.accounts";
+    private const string ModelKey = "CreateAccountModel";
     private readonly List<IBankAccount> _accounts;
     private readonly IStorageService _storageService;
-    
     private bool isLoaded;
-    
+    private CreateAccountModel _model = new();
+
     public AccountService(IStorageService storageService)
     {
         _storageService = storageService;
@@ -20,23 +15,16 @@ public class AccountService : IAccountService
 
     private async Task IsInitialized()
     {
-        if (!isLoaded)
-        {
-            return;
-        }
+        if (isLoaded) return;
         var fromStorage = await _storageService.GetItemAsync<List<BankAccount>>(StorageKey);
         _accounts.Clear();
-        if(fromStorage is {Count: >0})
+        if (fromStorage is { Count: > 0 })
             _accounts.AddRange(fromStorage);
         isLoaded = true;
     }
-    
+
     private Task SaveAsync() => _storageService.SetItemAsync(StorageKey, _accounts);
-    
-    public AccountService()
-    {
-        _accounts = new List<IBankAccount>();
-    }
+
     public async Task<IBankAccount> CreateAccount(string name, AccountType accountType, CurrencyType currency, decimal initialBalance)
     {
         await IsInitialized();
@@ -50,5 +38,19 @@ public class AccountService : IAccountService
     {
         await IsInitialized();
         return _accounts.Cast<IBankAccount>().ToList();
+    }
+
+    public async Task<CreateAccountModel> LoadModelAsync()
+    {
+        var savedModel = await _storageService.GetItemAsync<CreateAccountModel>(ModelKey);
+        if (savedModel != null)
+            _model = savedModel;
+        return _model;
+    }
+
+    public Task SaveModelAsync(CreateAccountModel model)
+    {
+        _model = model;
+        return _storageService.SetItemAsync(ModelKey, model);
     }
 }

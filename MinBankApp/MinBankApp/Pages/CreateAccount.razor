@@ -1,7 +1,7 @@
 @page "/CreateAccount"
 @using MinBankApp.Services
 @inject IAccountService AccountService
-@inject IStorageService LocalService
+
 
 <h3>Skapa nytt konto</h3>
 <EditForm Model="_model" OnValidSubmit="CreateAccountAsync" FormName="CreateAccountForm">
@@ -67,101 +67,33 @@ else
 }
 
 @code {
-    private const string StorageKey = "Accounts";
-    private CreateAccountModel _model = new();
-    private List<IBankAccount> _accounts = new();
+private CreateAccountModel _model = new();
+private List<IBankAccount> _accounts = new();
 
-    protected override async Task OnInitializedAsync()
-    {
-        var savedModel = await LocalService.GetItemAsync<CreateAccountModel>("CreateAccountModel");
-        if (savedModel != null)
-            _model = savedModel;
+protected override async Task OnInitializedAsync()
+{
+_model = await AccountService.LoadModelAsync();
+_accounts = await AccountService.GetAccounts();
+}
 
-        var savedAccounts = await LocalService.GetItemAsync<List<AccountStorageDto>>(StorageKey);
-        if (savedAccounts != null && savedAccounts.Count > 0)
-        {
-            _accounts = savedAccounts
-                .Select(dto => new BankAccount(dto.Name, dto.Type, dto.Currency, dto.Balance))
-                .Cast<IBankAccount>()
-                .ToList();
-        }
-        else
-        {
-            _accounts = await AccountService.GetAccounts();
-        }
-    }
-
-
-
-
-    private async Task CreateAccountAsync()
-    {
-        // Skapa konto och spara – med felhantering
-        try
-        {
-            Console.WriteLine(_model.Name);
-
-            // Skapa via tjänsten för domänkonsistens
-            var created = await AccountService.CreateAccount(
-                _model.Name,
-                _model.Type,
-                _model.Currency,
-                _model.InitialBalance
-            );
-
-            _accounts = await AccountService.GetAccounts();
-            _model.Clear();
-            StateHasChanged();
-
-            // Spara ögonblicksbild till lagring
-            var snapshot = _accounts.Select(a => new AccountStorageDto
-            {
-                Name = a.Name,
-                Type = a.AccountType,
-                Currency = a.Currency,
-                Balance = a.Balance
-            }).ToList();
-
-            await LocalService.SetItemAsync(StorageKey, snapshot);
-            _model.Clear();
-        }
-        catch (ArgumentException ex)
-        {
-            // Ogiltiga värden (t.ex. negativa belopp)
-            Console.Error.WriteLine(ex);
-        }
-        catch (InvalidOperationException ex)
-        {
-            // Tillståndsrelaterat fel (t.ex. otillräckliga medel)
-            Console.Error.WriteLine(ex);
-        }
-        catch (Exception ex)
-        {
-            // Generellt fel
-            Console.Error.WriteLine(ex);
-        }
-    }
-
-    private class CreateAccountModel
-    {
-        public string Name { get; set; }
-        public AccountType Type { get; set; }
-        public CurrencyType Currency { get; set; }
-        public decimal InitialBalance { get; set; }
-
-        public void Clear()
-        {
-            Name = string.Empty;
-            Currency = CurrencyType.None;
-            InitialBalance = 0;
-            Type = default;
-        }
-    }
-    public class AccountStorageDto
-    {
-        public string Name { get; set; } = string.Empty;
-        public AccountType Type { get; set; } = AccountType.None;
-        public CurrencyType Currency { get; set; } = CurrencyType.None;
-        public decimal Balance { get; set; }
-    }
+private async Task CreateAccountAsync()
+{
+try
+{
+var created = await AccountService.CreateAccount(
+_model.Name,
+_model.Type,
+_model.Currency,
+_model.InitialBalance
+);
+_accounts = await AccountService.GetAccounts();
+_model.Clear();
+await AccountService.SaveModelAsync(_model);
+StateHasChanged();
+}
+catch (Exception ex)
+{
+Console.Error.WriteLine(ex);
+}
+}
 }
