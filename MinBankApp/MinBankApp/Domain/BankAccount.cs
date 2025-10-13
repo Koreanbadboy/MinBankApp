@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using MinBankApp.Interfaces;
 
 namespace MinBankApp.Domain;
@@ -18,6 +19,19 @@ public class BankAccount : IBankAccount
         Currency = currency;
         Balance = initialBalance;
         LastUpdated = DateTime.Now;
+    }
+
+    [JsonConstructor]
+    public BankAccount(Guid id, string name, AccountType accountType, CurrencyType currency, decimal balance,
+        DateTime lastUpdated)
+    {
+        Id = id;
+        Name = name;
+        AccountType = accountType;
+        Balance = balance;
+        Currency = currency;
+        
+        LastUpdated = lastUpdated;
     }
     
     

@@ -1,8 +1,79 @@
 @page "/NewTransaction"
+@using System.Linq
+@using MinBankApp.Domain
+@using MinBankApp.Interfaces
+@inject ITransactionService TransactionService
+@inject IAccountService AccountService
+
 <h3>Ny betalning</h3>
 
+@if (!_accounts.Any())
+{
+    <div class="alert alert-warning">
+        Inga konton hittades. Skapa först ett konto på <a href="/CreateAccount">CreateAccount</a>.
+    </div>
+}
+else
+{
+    <EditForm Model="_model" OnValidSubmit="SaveAsync">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
 
+        <div class="mb-2">
+            <label>Konto</label>
+            <InputSelect @bind-Value="_model.AccountName">
+                <option value="">Välj konto...</option>
+                @foreach (var a in _accounts)
+                {
+                    <option value="@a.Name">@a.Name (@a.AccountType) – @a.Currency</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div class="mb-2">
+            <label>Belopp</label>
+            <InputNumber @bind-Value="_model.Amount" />
+        </div>
+
+        <div class="mb-2">
+            <label>Beskrivning</label>
+            <InputText @bind-Value="_model.Description" />
+        </div>
+
+        <button type="submit">Spara betalning</button>
+    </EditForm>
+}
+
+@if (_transactions.Any())
+{
+    <h4 class="mt-4">Alla betalningar</h4>
+    <ul>
+        @foreach (var t in _transactions)
+        {
+            <li>@t.Date.ToShortDateString() – <strong>@t.AccountName</strong> – @t.Amount – @t.Description</li>
+        }
+    </ul>
+}
 
 @code {
-    
+    private List<IBankAccount> _accounts = new();
+    private Transaction _model = new();
+    private List<Transaction> _transactions = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch accounts asynchronously
+        _accounts = await AccountService.GetAccounts() ?? new List<IBankAccount>();
+
+        // Fetch saved transactions
+        _transactions = await TransactionService.GetAllAsync();
+    }
+
+
+    private async Task SaveAsync()
+    {
+        await TransactionService.CreateAsync(_model);
+        _transactions = await TransactionService.GetAllAsync(); 
+        _model = new Transaction(); // nollställ formuläret
+    }
 }

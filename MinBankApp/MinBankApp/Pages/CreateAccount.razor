@@ -7,7 +7,7 @@
 <EditForm Model="_model" OnValidSubmit="CreateAccountAsync" FormName="CreateAccountForm">
     <DataAnnotationsValidator />
     <ValidationSummary />
-   
+
     <!-- RUTA för kontonamn -->
     <div class="mb-2">
         <label>Kontonamn</label>
@@ -19,6 +19,7 @@
         <label>Kontotyp</label>
         <InputSelect @bind-Value="_model.Type">
             <option value="">Välj kontotyp!</option>
+
             <option value="@AccountType.Deposit">Baskonto</option>
             <option value="@AccountType.Savings">Sparkonto</option>
         </InputSelect>
@@ -34,13 +35,13 @@
             }
         </InputSelect>
     </div>
-    
+
     <!-- RUTA för Start saldo -->
     <div class="mb-2">
         <label>Start saldo</label>
         <InputNumber @bind-Value="_model.InitialBalance" />
     </div>
-    
+
     <!-- Knapp för skapa -->
     <button type="submit">Skapa</button>
 </EditForm>
@@ -65,19 +66,34 @@ else
     </ul>
 }
 
-
-
 @code {
-    private const string StorageKey = "bankkonto.accounts";
+    private const string StorageKey = "Accounts";
     private CreateAccountModel _model = new();
     private List<IBankAccount> _accounts = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        _accounts = AccountService.GetAccounts().ToList();
-        base.OnInitialized();
+        var savedModel = await LocalService.GetItemAsync<CreateAccountModel>("CreateAccountModel");
+        if (savedModel != null)
+            _model = savedModel;
+
+        var savedAccounts = await LocalService.GetItemAsync<List<AccountStorageDto>>(StorageKey);
+        if (savedAccounts != null && savedAccounts.Count > 0)
+        {
+            _accounts = savedAccounts
+                .Select(dto => new BankAccount(dto.Name, dto.Type, dto.Currency, dto.Balance))
+                .Cast<IBankAccount>()
+                .ToList();
+        }
+        else
+        {
+            _accounts = await AccountService.GetAccounts();
+        }
     }
-    
+
+
+
+
     private async Task CreateAccountAsync()
     {
         // Skapa konto och spara – med felhantering
@@ -86,15 +102,16 @@ else
             Console.WriteLine(_model.Name);
 
             // Skapa via tjänsten för domänkonsistens
-            var created = AccountService.CreateAccount(
+            var created = await AccountService.CreateAccount(
                 _model.Name,
                 _model.Type,
                 _model.Currency,
                 _model.InitialBalance
             );
 
-            // Uppdatera lista i minnet för UI
-            _accounts.Add(created);
+            _accounts = await AccountService.GetAccounts();
+            _model.Clear();
+            StateHasChanged();
 
             // Spara ögonblicksbild till lagring
             var snapshot = _accounts.Select(a => new AccountStorageDto
@@ -125,8 +142,6 @@ else
         }
     }
 
-
-
     private class CreateAccountModel
     {
         public string Name { get; set; }
@@ -140,8 +155,6 @@ else
             Currency = CurrencyType.None;
             InitialBalance = 0;
             Type = default;
-            
-            
         }
     }
     public class AccountStorageDto
@@ -152,5 +165,3 @@ else
         public decimal Balance { get; set; }
     }
 }
-
-
