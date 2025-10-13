@@ -11,7 +11,7 @@ public class AccountService : IAccountService
     {
         _accounts = new List<IBankAccount>();
     }
-    public IBankAccount CreateAccount(string name, AccountType accountType, string currency, decimal initialBalance)
+    public IBankAccount CreateAccount(string name, AccountType accountType, CurrencyType currency, decimal initialBalance)
     {
         var account = new BankAccount(name, accountType, currency, initialBalance);
         _accounts.Add(account);
