@@ -2,18 +2,20 @@
 @using MinBankApp.Services
 @inject IAccountService AccountService
 
-<h3>Skapa nytt konto</h3>
+<h3>Hantera konto</h3>
 @if(_accounts.Count == 0)
 {
     <!-- Visa formulär för att skapa nytt konto om inga konton finns -->
     <EditForm Model="_formModel" OnValidSubmit="CreateAccountAsync" FormName="CreateAccountForm">
         <DataAnnotationsValidator />
         <ValidationSummary />
+        
         <!-- kontonamn -->
         <div class="mb-3" style="max-width:400px;">
             <label for="accountName" class="form-label">Kontonamn</label>
             <InputText id="accountName" class="form-control" style="max-width:100%;" @bind-Value="_formModel.Name" />
         </div>
+        
         <!-- välj kontotyp -->
         <div class="mb-3" style="max-width:400px;">
             <label for="accountType" class="form-label">Kontotyp</label>
