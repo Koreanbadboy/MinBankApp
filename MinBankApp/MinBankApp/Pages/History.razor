@@ -5,6 +5,7 @@
 
 <h3>Historik</h3>
 
+<!-- Konto-filter: Välj vilket konto du vill se historik för -->
 <div class="mb-3" style="max-width:400px;">
     <label for="accountFilter" class="form-label">Välj konto</label>
     <InputSelect id="accountFilter" class="form-select" style="max-width:100%;" @bind-Value="_selectedAccountName">
@@ -21,10 +22,15 @@
 
 @if (string.IsNullOrEmpty(_selectedAccountName))
 {
+    <!-- Visa info om inget konto är valt -->
     <div class="alert alert-info">Välj ett konto för att se dess transaktioner.</div>
 }
 else if (FilteredTransactions.Any())
 {
+    <!-- Radera historik-knapp: rensar alla transaktioner -->
+    <button class="btn btn-danger mb-3" style="max-width:200px;" @onclick="ClearHistoryAsync">Radera historik</button>
+
+    <!-- Tabell med transaktioner för valt konto -->
     <table class="table table-striped" style="max-width:800px;">
         <thead>
             <tr>
@@ -38,7 +44,9 @@ else if (FilteredTransactions.Any())
         <tbody>
             @foreach (var t in FilteredTransactions.OrderByDescending(x => x.Date))
             {
+                // Typ: "Överfört" om kontot är avsändare, "Mottagit" om kontot är mottagare
                 var typ = t.FromAccountName == _selectedAccountName ? "Överfört" : "Mottagit";
+                // Motpart: den andra parten i transaktionen
                 var motpart = t.FromAccountName == _selectedAccountName ? t.ToAccountName : t.FromAccountName;
                 <tr>
                     <td>@t.Date.ToString("yyyy-MM-dd")</td>
@@ -53,23 +61,37 @@ else if (FilteredTransactions.Any())
 }
 else
 {
+    <!-- Meddelande om inga transaktioner finns för valt konto -->
     <div>Inga transaktioner hittades för valt konto.</div>
 }
 
 @code {
+    // Valda kontonamn för filtrering
     private string _selectedAccountName = "";
+    // Lista med alla konton
     private List<IBankAccount> _accounts = new();
+    // Lista med alla transaktioner
     private List<Transaction> _transactions = new();
 
+    // Hämtar konton och transaktioner vid sidladdning
     protected override async Task OnInitializedAsync()
     {
         _accounts = await AccountService.GetAccounts();
         _transactions = await TransactionService.GetAllAsync();
     }
 
+    // Filtrerar transaktioner så att endast de som rör valt konto visas
     private IEnumerable<Transaction> FilteredTransactions =>
         _transactions
             .Where(t => t.FromAccountName == _selectedAccountName || t.ToAccountName == _selectedAccountName)
             .GroupBy(t => new { t.Date, t.Amount, t.FromAccountName, t.ToAccountName, t.Description })
             .Select(g => g.First());
+
+    // Rensar all historik (alla transaktioner)
+    public async Task ClearHistoryAsync()
+    {
+        await TransactionService.ClearAllAsync();
+        _transactions = await TransactionService.GetAllAsync();
+        StateHasChanged();
+    }
 }
