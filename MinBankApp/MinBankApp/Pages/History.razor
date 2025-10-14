@@ -1,6 +1,75 @@
 @page "/History"
+@using System.Linq
+@inject IAccountService AccountService
+@inject ITransactionService TransactionService
+
 <h3>Historik</h3>
 
+<div class="mb-3" style="max-width:400px;">
+    <label for="accountFilter" class="form-label">Välj konto</label>
+    <InputSelect id="accountFilter" class="form-select" style="max-width:100%;" @bind-Value="_selectedAccountName">
+        <option value="">Välj konto...</option>
+        @foreach (var a in _accounts)
+        {
+            var kontoTyp = a.AccountType == AccountType.Uttag ? "Privatkonto"
+                : a.AccountType == AccountType.Spara ? "Sparkonto"
+                : a.AccountType.ToString();
+            <option value="@a.Name">@a.Name (@kontoTyp)</option>
+        }
+    </InputSelect>
+</div>
+
+@if (string.IsNullOrEmpty(_selectedAccountName))
+{
+    <div class="alert alert-info">Välj ett konto för att se dess transaktioner.</div>
+}
+else if (FilteredTransactions.Any())
+{
+    <table class="table table-striped" style="max-width:800px;">
+        <thead>
+            <tr>
+                <th>Datum</th>
+                <th>Typ</th>
+                <th>Belopp</th>
+                <th>Motpart</th>
+                <th>Beskrivning</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var t in FilteredTransactions.OrderByDescending(x => x.Date))
+            {
+                var typ = t.FromAccountName == _selectedAccountName ? "Överfört" : "Mottagit";
+                var motpart = t.FromAccountName == _selectedAccountName ? t.ToAccountName : t.FromAccountName;
+                <tr>
+                    <td>@t.Date.ToString("yyyy-MM-dd")</td>
+                    <td>@typ</td>
+                    <td>@t.Amount</td>
+                    <td>@motpart</td>
+                    <td>@t.Description</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <div>Inga transaktioner hittades för valt konto.</div>
+}
+
 @code {
-    
+    private string _selectedAccountName = "";
+    private List<IBankAccount> _accounts = new();
+    private List<Transaction> _transactions = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _accounts = await AccountService.GetAccounts();
+        _transactions = await TransactionService.GetAllAsync();
+    }
+
+    private IEnumerable<Transaction> FilteredTransactions =>
+        _transactions
+            .Where(t => t.FromAccountName == _selectedAccountName || t.ToAccountName == _selectedAccountName)
+            .GroupBy(t => new { t.Date, t.Amount, t.FromAccountName, t.ToAccountName, t.Description })
+            .Select(g => g.First());
 }

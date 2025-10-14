@@ -75,9 +75,10 @@ else
         <ul>
             @foreach (var t in _transactions.Where(x => x.Amount > 0))
             {
-                var account = _accounts.FirstOrDefault(a => a.Name == t.AccountName);
+                var fromAccount = _accounts.FirstOrDefault(a => a.Name == t.FromAccountName);
+                var toAccount = _accounts.FirstOrDefault(a => a.Name == t.ToAccountName);
                 <li>
-                    @t.Date.ToShortDateString() – <strong>@t.AccountName</strong> – mottagit – @t.Amount @account?.Currency – @t.Description
+                    @t.Date.ToShortDateString() – <strong>@t.FromAccountName</strong> överfört → <strong>@t.ToAccountName</strong> mottagit – @t.Amount @toAccount?.Currency – @t.Description
                 </li>
             }
         </ul>

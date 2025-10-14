@@ -21,11 +21,13 @@ public class InMemoryTransactionService : ITransactionService
     public async Task CreateAsync(Transaction tx)
     {
         var accounts = await _accountService.GetAccounts();
-        var account = accounts.FirstOrDefault(a => a.Name == tx.AccountName)
-            ?? throw new InvalidOperationException($"Konto '{tx.AccountName}' hittades inte.");
+        var account = accounts.FirstOrDefault(a => a.Name == tx.FromAccountName)
+            ?? throw new InvalidOperationException($"Konto '{tx.FromAccountName}' hittades inte.");
 
-        // IBankAccount har get-only Balance -> använd domänmetoder
         account.Withdraw(tx.Amount);
+
+        // Set both FromAccountName and ToAccountName to the same for single-account transactions
+        tx.ToAccountName = tx.FromAccountName;
 
         _items.Add(tx);
     }
@@ -61,8 +63,20 @@ public class InMemoryTransactionService : ITransactionService
 
         var now = DateTime.Now;
 
-        // Logga två transaktioner (ut + in) för historik
-        _items.Add(new Transaction { Date = now, AccountName = fromAccountName, Amount = amount, Description = description ?? $"Transfer to {toAccountName}" });
-        _items.Add(new Transaction { Date = now, AccountName = toAccountName, Amount = amount, Description = description ?? $"Transfer from {fromAccountName}" });
+        // Logga två transaktioner (ut + in) för historik, with correct from/to
+        _items.Add(new Transaction {
+            Date = now,
+            FromAccountName = fromAccountName,
+            ToAccountName = toAccountName,
+            Amount = amount,
+            Description = description ?? $"Transfer to {toAccountName}"
+        });
+        _items.Add(new Transaction {
+            Date = now,
+            FromAccountName = fromAccountName,
+            ToAccountName = toAccountName,
+            Amount = amount,
+            Description = description ?? $"Transfer from {fromAccountName}"
+        });
     }
 }
