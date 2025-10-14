@@ -59,35 +59,22 @@ else
     </EditForm>
 }
 
+<!-- Transaktionshistorik -->
 @if (_transactions.Any())
 {
-    <h4 class="mt-4">Alla betalningar</h4>
-    @foreach (var t in _transactions.Where(t => t.AccountName == _transferModel.FromAccountName))
-    {
-        var account = _accounts.FirstOrDefault(a => a.Name == t.AccountName);
-        <li>
-            @t.Date.ToShortDateString() – <strong>@t.AccountName</strong> – @t.Amount @account?.Currency – @t.Description
-        </li>
-    }
-    
-    <!-- transaktionshistorik -->
-
-    <!-- transaktionshistorik -->
-
     <div class="history-box" style="border:1px solid #ccc; padding:1em; margin-top:2em;">
         <h5>Transaktionshistorik</h5>
         <ul>
-            @foreach (var t in _transactions)
+            @foreach (var t in _transactions.Where(x => x.Amount > 0))
             {
                 var account = _accounts.FirstOrDefault(a => a.Name == t.AccountName);
-                var action = t.Amount < 0 ? "överfört" : "mottagit";
                 <li>
-                    @t.Date.ToShortDateString() – <strong>@t.AccountName</strong> – @action – @t.Amount @account?.Currency – @t.Description
+                    @t.Date.ToShortDateString() – <strong>@t.AccountName</strong> – mottagit – @t.Amount @account?.Currency – @t.Description
                 </li>
             }
         </ul>
     </div>
-    
+}
 
 @code {
     // List of accounts
@@ -131,5 +118,4 @@ else
         public decimal Amount { get; set; }
         public string Description { get; set; }
     }
-}
 }

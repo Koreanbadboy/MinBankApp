@@ -8,6 +8,8 @@ public class InMemoryTransactionService : ITransactionService
 {
     private static readonly List<Transaction> _items = new();
     private readonly IAccountService _accountService;
+    
+    
 
     // Viktigt: DI injicerar IAccountService här. Skapa inte med "new" själv.
     public InMemoryTransactionService(IAccountService accountService)
