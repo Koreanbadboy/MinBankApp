@@ -138,34 +138,38 @@ else
         <div style="max-width: 800px; overflow-x: auto;">
             <table class="table table-striped table-bordered align-middle" style="max-width: 100%;">
                 <thead>
-                    <tr>
-                        <th style="min-width:120px;">Namn</th>
-                        <th style="min-width:120px;">Typ</th>
-                        <th style="min-width:100px;">Saldo</th>
-                        <th style="min-width:100px;">Valuta</th>
-                        <th style="min-width:160px;">Senast uppdaterad</th>
-                        <th style="min-width:90px;">Åtgärd</th>
-                    </tr>
+                <tr>
+                    <th style="min-width:120px;">Namn</th>
+                    <th style="min-width:120px;">Typ</th>
+                    <th style="min-width:100px;">Saldo</th>
+                    <th style="min-width:100px;">Valuta</th>
+                    <th style="min-width:160px;">Senast uppdaterad</th>
+                    <th style="min-width:90px;">Åtgärd</th>
+                </tr>
                 </thead>
                 <tbody>
-                    @foreach(var account in _accounts)
-                    {
-                        <tr>
-                            <td>@account.Name</td>
-                            <td>@GetAccountTypeName(account.AccountType)</td>
-                            <td>@account.Balance</td>
-                            <td>@account.Currency</td>
-                            <td>@account.LastUpdated.ToLocalTime()</td>
-                            <td>
-                                <button class="btn btn-danger btn-sm" @onclick="() => DeleteAccountAsync(account.Id)">Radera</button>
-                            </td>
-                        </tr>
-                    }
+                @foreach(var account in _accounts)
+                {
+                    <tr>
+                        <td>@account.Name</td>
+                        <td>@GetAccountTypeName(account.AccountType)</td>
+                        <td>@account.Balance</td>
+                        <td>@account.Currency</td>
+                        <td>@account.LastUpdated.ToLocalTime()</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteAccountAsync(account.Id)">Radera</button>
+                        </td>
+                    </tr>
+                }
                 </tbody>
             </table>
         </div>
     }
 </div>
+
+<footer class="footer">
+    <p>© 2025 MinBankApp. All rights reserved.</p>
+</footer>
 
 @code {
     // model klass
