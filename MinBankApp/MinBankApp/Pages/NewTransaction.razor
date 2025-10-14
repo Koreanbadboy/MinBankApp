@@ -26,10 +26,14 @@ else
                 <option value="">Välj konto...</option>
                 @foreach (var a in _accounts)
                 {
-                    <option value="@a.Name">@a.Name (@a.AccountType) – @a.Currency</option>
+                    var kontoTyp = a.AccountType == AccountType.Uttag ? "Privatkonto"
+                        : a.AccountType == AccountType.Spara ? "Sparkonto"
+                        : a.AccountType.ToString();
+                    <option value="@a.Name">@a.Name (@kontoTyp) – @a.Currency</option>
                 }
             </InputSelect>
         </div>
+
 
         <!-- Till konto -->
         <div class="mb-3" style="max-width: 400px;">
@@ -38,10 +42,14 @@ else
                 <option value="">Välj konto...</option>
                 @foreach (var a in _accounts)
                 {
-                    <option value="@a.Name">@a.Name (@a.AccountType) – @a.Currency</option>
+                    var kontoTyp = a.AccountType == AccountType.Uttag ? "Privatkonto"
+                        : a.AccountType == AccountType.Spara ? "Sparkonto"
+                        : a.AccountType.ToString();
+                    <option value="@a.Name">@a.Name (@kontoTyp) – @a.Currency</option>
                 }
             </InputSelect>
         </div>
+
 
         <!-- Belopp -->
         <div class="mb-3" style="max-width: 400px;">
