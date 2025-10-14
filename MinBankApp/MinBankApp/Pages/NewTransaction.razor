@@ -70,7 +70,7 @@ else
 <!-- Transaktionshistorik -->
 @if (_transactions.Any())
 {
-    <div class="history-box" style="border:1px solid #ccc; padding:1em; margin-top:2em;">
+    <div class="history-box" style="border:1px solid #ccc; padding:1em; margin-top:2em; max-width:600px;">
         <h5>Transaktionshistorik</h5>
         <ul>
             @foreach (var t in _transactions.Where(x => x.Amount > 0))
