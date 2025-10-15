@@ -61,7 +61,7 @@ public class TransactionService : ITransactionService
         var to = accounts.FirstOrDefault(a => a.Name == toAccountName)
                  ?? throw new InvalidOperationException($"Till-konto '{toAccountName}' hittades inte.");
         if (from.Currency == CurrencyType.None || to.Currency == CurrencyType.None)
-            throw new InvalidOperationException("Ett eller båda konton har ingen giltig valuta inställd. Välj endast konton med en giltig valuta.");
+            throw new InvalidOperationException($"Ett eller båda konton har ingen giltig valuta inställd ({from.Currency} → {to.Currency}). Välj endast konton med en giltig valuta.");
         if (from.Currency != to.Currency)
             throw new InvalidOperationException($"Valutor matchar inte ({from.Currency} → {to.Currency}).");
         from.Withdraw(amount);
