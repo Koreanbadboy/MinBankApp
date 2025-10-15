@@ -72,14 +72,7 @@ public class TransactionService : ITransactionService
             FromAccountName = fromAccountName,
             ToAccountName = toAccountName,
             Amount = amount,
-            Description = description ?? $"Transfer to {toAccountName}"
-        });
-        _items.Add(new Transaction {
-            Date = now,
-            FromAccountName = fromAccountName,
-            ToAccountName = toAccountName,
-            Amount = amount,
-            Description = description ?? $"Transfer from {fromAccountName}"
+            Description = description ?? $"Transfer from {fromAccountName} to {toAccountName}"
         });
         await SaveToStorageAsync();
     }
