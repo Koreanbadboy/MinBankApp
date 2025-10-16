@@ -1,6 +1,8 @@
 @page "/CreateAccount"
 @using System.ComponentModel.DataAnnotations
 @using MinBankApp.Services
+@using MinBankApp.Models
+@using MinBankApp.Domain
 @inject IAccountService AccountService
 
 <h3>Hantera konto</h3>
@@ -10,13 +12,13 @@
     <EditForm Model="_formModel" OnValidSubmit="CreateAccountAsync" FormName="CreateAccountForm">
         <DataAnnotationsValidator />
         <ValidationSummary />
-        
+
         <!-- kontonamn -->
         <div class="mb-3" style="max-width:400px;">
             <label for="accountName" class="form-label">Kontonamn</label>
             <InputText id="accountName" class="form-control" style="max-width:100%;" @bind-Value="_formModel.Name" />
         </div>
-        
+
         <!-- välj kontotyp -->
         <div class="mb-3" style="max-width:400px;">
             <label for="accountType" class="form-label">Kontotyp</label>
@@ -173,20 +175,9 @@ else
 </footer>
 
 @code {
-    // model klass
-    public class CreateAccountFormModel
-    {
-        [Required(ErrorMessage = "Kontonamn är obligatoriskt.")]
-        public string Name { get; set; }
-        [Range(1, int.MaxValue, ErrorMessage = "Välj en giltig kontotyp.")]
-        public AccountType Type { get; set; }
-        [Range(1, int.MaxValue, ErrorMessage = "Välj en giltig valuta.")]
-        public CurrencyType Currency { get; set; }
-        public decimal InitialBalance { get; set; }
-    }
-
     private CreateAccountFormModel _formModel = new() { Type = AccountType.None, Currency = CurrencyType.None };
     private List<IBankAccount> _accounts = new();
+    private TransactionFormModel _transactionModel = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -197,14 +188,13 @@ else
     {
         try
         {
-            var created = await AccountService.CreateAccount(
+            await AccountService.CreateAccount(
                 _formModel.Name,
                 _formModel.Type,
                 _formModel.Currency,
                 _formModel.InitialBalance
             );
             _accounts = await AccountService.GetAccounts();
-            // reset form
             _formModel = new CreateAccountFormModel { Type = AccountType.None, Currency = CurrencyType.None };
             StateHasChanged();
         }
@@ -220,6 +210,10 @@ else
         {
             await AccountService.DeleteAccount(accountId);
             _accounts = await AccountService.GetAccounts();
+            if (selectedAccountId == accountId)
+            {
+                _selectedAccountIdString = null;
+            }
             StateHasChanged();
         }
         catch (Exception ex)
@@ -233,45 +227,41 @@ else
     {
         get
         {
-            if(Guid.TryParse(_selectedAccountIdString, out var guid))
+            if (Guid.TryParse(_selectedAccountIdString, out var guid))
                 return guid;
             return null;
         }
-        set
-        {
-            _selectedAccountIdString = value?.ToString();
-        }
+        set => _selectedAccountIdString = value?.ToString();
     }
     private IBankAccount selectedAccount => _accounts.FirstOrDefault(a => a.Id == selectedAccountId);
 
-    private TransactionModel _transactionModel = new();
-
-    public class TransactionModel
-    {
-        public decimal Amount { get; set; }
-        public string Type { get; set; } = "Deposit"; // "Deposit" eller "Withdraw"
-    }
-
     private async Task HandleTransactionAsync()
     {
-        if(selectedAccount == null) return;
-        // Hämta BankAccount från listan
-        var idx = _accounts.FindIndex(a => a.Id == selectedAccount.Id);
-        if (idx < 0) return;
-        var bankAccount = _accounts[idx] as MinBankApp.Domain.BankAccount;
+        if (selectedAccount == null) return;
+
+        var bankAccount = selectedAccount as BankAccount;
         if (bankAccount == null) return;
-        if(_transactionModel.Type == "Deposit")
+
+        try
         {
-            bankAccount.Deposit(_transactionModel.Amount);
+            if (_transactionModel.Type == "Deposit")
+            {
+                bankAccount.Deposit(_transactionModel.Amount, Guid.Empty, "Egen insättning", "Insättning");
+            }
+            else if (_transactionModel.Type == "Withdraw")
+            {
+                bankAccount.Withdraw(_transactionModel.Amount, Guid.Empty, "Eget uttag", "Uttag");
+            }
+
+            await AccountService.UpdateAccount(bankAccount);
+            _accounts = await AccountService.GetAccounts();
+            _transactionModel = new TransactionFormModel();
+            StateHasChanged();
         }
-        else if(_transactionModel.Type == "Withdraw")
+        catch (Exception ex)
         {
-            bankAccount.Withdraw(_transactionModel.Amount);
+            Console.Error.WriteLine($"Transaction failed: {ex.Message}");
         }
-        await AccountService.UpdateAccount(bankAccount); // Spara ändringarna
-        _accounts = await AccountService.GetAccounts(); // Uppdatera listan
-        _transactionModel = new TransactionModel(); // Nollställ formulär
-        StateHasChanged();
     }
 
     private string GetAccountTypeName(AccountType type)

@@ -1,8 +1,8 @@
 @page "/NewTransaction"
 @using System.Linq
+@using System.ComponentModel.DataAnnotations
 @using MinBankApp.Domain
 @using MinBankApp.Interfaces
-@inject ITransactionService TransactionService
 @inject IAccountService AccountService
 
 <h3>Ny betalning / Överföring</h3>
@@ -33,6 +33,15 @@ else
                 }
             </InputSelect>
         </div>
+
+        <!-- Visa saldo för valt "Från konto" -->
+        @if (SelectedFromAccount != null)
+        {
+            <div class="mb-3" style="max-width:400px;">
+                <label class="form-label">Saldo: </label>
+                <span class="fw-bold">@SelectedFromAccount.Balance @SelectedFromAccount.Currency</span>
+            </div>
+        }
 
 
         <!-- Till konto -->
@@ -68,67 +77,117 @@ else
 }
 
 <!-- Transaktionshistorik -->
-@if (_transactions.Any())
+@{
+    var allTransactions = _accounts
+        .SelectMany(a => a.Transactions)
+        .OrderByDescending(t => t.TimeStamp)
+        .ToList();
+
+
+
+}
+@if (allTransactions.Any())
 {
     <div class="history-box" style="border:1px solid #ccc; padding:1em; margin-top:2em; max-width:600px;">
         <h5>Transaktionshistorik</h5>
-        <ul>
-            @foreach (var t in _transactions.Where(x => x.Amount > 0))
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Datum</th>
+                    <th>Typ</th>
+                    <th>Belopp</th>
+                    <th>Konto</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var t in allTransactions)
             {
-                var fromAccount = _accounts.FirstOrDefault(a => a.Name == t.FromAccountName);
-                var toAccount = _accounts.FirstOrDefault(a => a.Name == t.ToAccountName);
-                <li>
-                    @t.TimeStamp.ToShortDateString() – <strong>@t.FromAccountName</strong> överfört → <strong>@t.ToAccountName</strong> mottagit – @t.Amount @toAccount?.Currency – @t.Description
-                </li>
+                // Bestäm typ-etikett utifrån TransactionType
+                var typ = t.TransactionType == TransactionType.Withdrawal ? "Uttag"
+                    : t.TransactionType == TransactionType.Deposit ? "Insättning"
+                    : t.TransactionType == TransactionType.TransferOut ? "Överfört"
+                    : t.TransactionType == TransactionType.TransferIn ? "Mottagit"
+                    : t.TransactionType.ToString();
+
+                // Bestäm tecken och css-klass för belopp
+                var isNegative = t.TransactionType == TransactionType.Withdrawal || t.TransactionType == TransactionType.TransferOut;
+                var sign = isNegative ? "-" : "+";
+                var css = isNegative ? "text-danger" : "text-success";
+
+                // Visa båda parter för tydlighet
+                var parties = $"{t.FromAccountName} → {t.ToAccountName}";
+
+                <tr>
+                    <td>@t.TimeStamp.ToString("yyyy-MM-dd")</td>
+                    <td>@typ</td>
+                    <td class="@css">@sign@t.Amount.ToString("F2")</td>
+                    <td>@parties</td>
+                </tr>
             }
-        </ul>
+            </tbody>
+        </table>
     </div>
 }
+
 
 <footer class="footer">
     <p>© 2025 MinBankApp. All rights reserved.</p>
 </footer>
 
 @code {
-    // List of accounts
-    private List<IBankAccount> _accounts = new();
+private List<IBankAccount> _accounts = new();
+private IBankAccount? SelectedFromAccount => _accounts.FirstOrDefault(a => a.Name == _transferModel.FromAccountName);
+private TransferModel _transferModel = new();
+private string _errorMessage = "";
+protected override async Task OnInitializedAsync()
+{
+_accounts = await AccountService.GetAccounts();
+}
+private async Task TransferAsync()
+{
+_errorMessage = "";
+var fromAccount = SelectedFromAccount;
+var toAccount = _accounts.FirstOrDefault(a => a.Name == _transferModel.ToAccountName);
 
-    // Model for transfer form
-    private TransferModel _transferModel = new();
+if (fromAccount == null || toAccount == null)
+{
+_errorMessage = "Ogiltiga konton valda.";
+return;
+}
 
-    // List of transactions
-    private List<Transaction> _transactions = new();
+if (fromAccount.Id == toAccount.Id)
+{
+_errorMessage = "Du kan inte överföra pengar till samma konto.";
+return;
+}
 
-    // Load accounts and transactions on page load
-    protected override async Task OnInitializedAsync()
-    {
-        // Fetch accounts asynchronously
-        _accounts = await AccountService.GetAccounts() ?? new List<IBankAccount>();
+try
+{
+fromAccount.Withdraw(_transferModel.Amount, toAccount.Id, toAccount.Name, _transferModel.Description);
+toAccount.Deposit(_transferModel.Amount, fromAccount.Id, fromAccount.Name, _transferModel.Description);
 
-        // Fetch saved transactions
-        _transactions = await TransactionService.GetAllAsync();
-    }
+await AccountService.UpdateAccount((BankAccount)fromAccount);
+await AccountService.UpdateAccount((BankAccount)toAccount);
 
-    // Genomför överföring mellan konton
-    private async Task TransferAsync()
-    {
-        await TransactionService.TransferAsync(
-            _transferModel.FromAccountName,
-            _transferModel.ToAccountName,
-            _transferModel.Amount,
-            _transferModel.Description
-        );
-        _transactions = await TransactionService.GetAllAsync();
-        _transferModel = new TransferModel(); // reset form
-    }
+_accounts = await AccountService.GetAccounts();
+_transferModel = new TransferModel();
+StateHasChanged();
+}
+catch (Exception ex)
+{
+_errorMessage = ex.Message;
+}
+}
 
-
-    // Modell för överföring
-    public class TransferModel
-    {
-        public string FromAccountName { get; set; }
-        public string ToAccountName { get; set; }
-        public decimal Amount { get; set; }
-        public string Description { get; set; }
-    }
+// Modell för överföring
+public class TransferModel
+{
+[Required(ErrorMessage = "Välj ett konto att överföra från.")]
+public string FromAccountName { get; set; } = "";
+[Required(ErrorMessage = "Välj ett konto att överföra till.")]
+public string ToAccountName { get; set; } = "";
+[Range(0.01, (double)decimal.MaxValue, ErrorMessage = "Beloppet måste vara större än noll.")]
+public decimal Amount { get; set; }
+public string Description { get; set; } = "";
+}
 }

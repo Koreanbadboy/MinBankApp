@@ -1,7 +1,8 @@
 @page "/History"
 @using System.Linq
+@using MinBankApp.Interfaces
+@using MinBankApp.Domain
 @inject IAccountService AccountService
-@inject ITransactionService TransactionService
 
 <h3>Historik</h3>
 
@@ -51,7 +52,7 @@ else if (FilteredTransactions.Any())
                 <tr>
                     <td>@t.TimeStamp.ToString("yyyy-MM-dd")</td>
                     <td>@typ</td>
-                    <td>@t.Amount</td>
+                    <td>@t.Amount.ToString("C")</td>
                     <td>@motpart</td>
                     <td>@t.Description</td>
                 </tr>
@@ -75,27 +76,31 @@ else
     // Lista med alla konton
     private List<IBankAccount> _accounts = new();
     // Lista med alla transaktioner
-    private List<Transaction> _transactions = new();
+    private List<Transaction> _allTransactions = new();
 
     // Hämtar konton och transaktioner vid sidladdning
     protected override async Task OnInitializedAsync()
     {
+        // Hämta konton asynkront
         _accounts = await AccountService.GetAccounts();
-        _transactions = await TransactionService.GetAllAsync();
+        _allTransactions = _accounts.SelectMany(a => a.Transactions).ToList();
     }
 
     // Filtrerar transaktioner så att endast de som rör valt konto visas
     private IEnumerable<Transaction> FilteredTransactions =>
-        _transactions
-            .Where(t => t.FromAccountName == _selectedAccountName || t.ToAccountName == _selectedAccountName)
-            .GroupBy(t => new { Date = t.TimeStamp, t.Amount, t.FromAccountName, t.ToAccountName, t.Description })
-            .Select(g => g.First());
+        _allTransactions
+            .Where(t => t.FromAccountName == _selectedAccountName || t.ToAccountName == _selectedAccountName);
 
-    // Rensar all historik (alla transaktioner)
+    // Rensar historik för det valda kontot
     public async Task ClearHistoryAsync()
     {
-        await TransactionService.ClearAllAsync();
-        _transactions = await TransactionService.GetAllAsync();
-        StateHasChanged();
+        var selectedAccount = _accounts.FirstOrDefault(a => a.Name == _selectedAccountName);
+        if (selectedAccount is BankAccount bankAccount)
+        {
+            bankAccount.Transactions.Clear();
+            await AccountService.UpdateAccount(bankAccount);
+            _allTransactions = _accounts.SelectMany(a => a.Transactions).ToList();
+            StateHasChanged();
+        }
     }
 }
