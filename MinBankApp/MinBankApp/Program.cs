@@ -6,7 +6,6 @@ using MinBankApp.Services;
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
-
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IStorageService, StorageService>();
 
