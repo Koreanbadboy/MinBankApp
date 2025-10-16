@@ -8,4 +8,6 @@ public interface IAccountService
     Task<List<IBankAccount>> GetAccounts();
     Task DeleteAccount(Guid accountId);
     Task UpdateAccount(BankAccount account);
+    Task<IBankAccount?> GetAccountById(Guid accountId);
+    
 }

@@ -5,6 +5,8 @@
 @using MinBankApp.Interfaces
 @inject IAccountService AccountService
 
+<!-- Behöver skapa övetrassering, t ex om man tar ut mer än det som finns på kontot -->
+
 <h3>Ny betalning / Överföring</h3>
 
 @if (!_accounts.Any())

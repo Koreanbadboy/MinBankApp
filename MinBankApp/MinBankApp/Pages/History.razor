@@ -46,7 +46,7 @@ else if (FilteredTransactions.Any())
             @foreach (var t in FilteredTransactions.OrderByDescending(x => x.TimeStamp))
             {
                 // Typ: "Överfört" om kontot är avsändare, "Mottagit" om kontot är mottagare
-                var typ = t.FromAccountName == _selectedAccountName ? "Överfört" : "Mottagit";
+                var typ = t.FromAccountName == _selectedAccountName ? "Överfört" : "Insättning";
                 // Motpart: den andra parten i transaktionen
                 var motpart = t.FromAccountName == _selectedAccountName ? t.ToAccountName : t.FromAccountName;
                 <tr>
@@ -97,13 +97,29 @@ else
     // Rensar historik för det valda kontot
     public async Task ClearHistoryAsync()
     {
-        var selectedAccount = _accounts.FirstOrDefault(a => a.Name == _selectedAccountName);
-        if (selectedAccount is BankAccount bankAccount)
+        var selectedAccountInfo = _accounts.FirstOrDefault(a => a.Name == _selectedAccountName);
+        if (selectedAccountInfo != null)
         {
-            bankAccount.Transactions.Clear();
-            await AccountService.UpdateAccount(bankAccount);
-            _accounts.SelectMany(a => a.Transactions).ToList();
-            StateHasChanged();
+            var accountToUpdate = await AccountService.GetAccountById(selectedAccountInfo.Id);
+
+            if (accountToUpdate is BankAccount originalAccount)
+            {
+                // KORRIGERING: Anropa rätt konstruktor med en tom transaktionslista.
+                var updatedAccount = new BankAccount(
+                    originalAccount.Id,
+                    originalAccount.Name,
+                    originalAccount.AccountType,
+                    originalAccount.Currency,
+                    originalAccount.Balance,
+                    DateTime.Now,
+                    new List<Transaction>() // Skicka med en ny, tom lista
+                );
+
+                await AccountService.UpdateAccount(updatedAccount);
+
+                _accounts = await AccountService.GetAccounts();
+                StateHasChanged();
+            }
         }
     }
 }

@@ -59,4 +59,10 @@ public class AccountService : IAccountService
             await SaveAsync();
         }
     }
+public async Task<IBankAccount?> GetAccountById(Guid accountId)
+    {
+        await IsInitialized();
+        return _accounts.FirstOrDefault(a => a.Id == accountId);
+    }
+    
 }

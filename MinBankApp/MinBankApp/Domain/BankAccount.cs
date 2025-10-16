@@ -11,7 +11,7 @@ public class BankAccount : IBankAccount
     public CurrencyType Currency { get; private set; }
     public decimal Balance { get; private set; }
     public DateTime LastUpdated { get; private set; }
-    private readonly List<Transaction> _transactions = new List<Transaction>();
+    private List<Transaction> _transactions = new List<Transaction>();
 
     public List<Transaction> Transactions => _transactions;
 
@@ -26,7 +26,7 @@ public class BankAccount : IBankAccount
 
     [JsonConstructor]
     public BankAccount(Guid id, string name, AccountType accountType, CurrencyType currency, decimal balance,
-        DateTime lastUpdated)
+        DateTime lastUpdated, List<Transaction> transactions)
     {
         Id = id;
         Name = name;
@@ -34,6 +34,7 @@ public class BankAccount : IBankAccount
         Balance = balance;
         Currency = currency;
         LastUpdated = lastUpdated;
+        _transactions = transactions; // Lägg till transaktioner vid återskapande
     }
 
     /// <summary>
