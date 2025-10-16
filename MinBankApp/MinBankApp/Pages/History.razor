@@ -42,14 +42,14 @@ else if (FilteredTransactions.Any())
             </tr>
         </thead>
         <tbody>
-            @foreach (var t in FilteredTransactions.OrderByDescending(x => x.Date))
+            @foreach (var t in FilteredTransactions.OrderByDescending(x => x.TimeStamp))
             {
                 // Typ: "Överfört" om kontot är avsändare, "Mottagit" om kontot är mottagare
                 var typ = t.FromAccountName == _selectedAccountName ? "Överfört" : "Mottagit";
                 // Motpart: den andra parten i transaktionen
                 var motpart = t.FromAccountName == _selectedAccountName ? t.ToAccountName : t.FromAccountName;
                 <tr>
-                    <td>@t.Date.ToString("yyyy-MM-dd")</td>
+                    <td>@t.TimeStamp.ToString("yyyy-MM-dd")</td>
                     <td>@typ</td>
                     <td>@t.Amount</td>
                     <td>@motpart</td>
@@ -88,7 +88,7 @@ else
     private IEnumerable<Transaction> FilteredTransactions =>
         _transactions
             .Where(t => t.FromAccountName == _selectedAccountName || t.ToAccountName == _selectedAccountName)
-            .GroupBy(t => new { t.Date, t.Amount, t.FromAccountName, t.ToAccountName, t.Description })
+            .GroupBy(t => new { Date = t.TimeStamp, t.Amount, t.FromAccountName, t.ToAccountName, t.Description })
             .Select(g => g.First());
 
     // Rensar all historik (alla transaktioner)

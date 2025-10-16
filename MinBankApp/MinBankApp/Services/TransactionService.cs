@@ -43,7 +43,7 @@ public class TransactionService : ITransactionService
     public async Task<List<Transaction>> GetAllAsync()
     {
         await LoadFromStorageAsync();
-        return _items.OrderByDescending(t => t.Date).ToList();
+        return _items.OrderByDescending(t => t.TimeStamp).ToList();
     }
 
     public async Task TransferAsync(string fromAccountName, string toAccountName, decimal amount, string? description = null)
@@ -68,7 +68,7 @@ public class TransactionService : ITransactionService
         to.Deposit(amount);
         var now = DateTime.Now;
         _items.Add(new Transaction {
-            Date = now,
+            TimeStamp = now,
             FromAccountName = fromAccountName,
             ToAccountName = toAccountName,
             Amount = amount,

@@ -78,7 +78,7 @@ else
                 var fromAccount = _accounts.FirstOrDefault(a => a.Name == t.FromAccountName);
                 var toAccount = _accounts.FirstOrDefault(a => a.Name == t.ToAccountName);
                 <li>
-                    @t.Date.ToShortDateString() – <strong>@t.FromAccountName</strong> överfört → <strong>@t.ToAccountName</strong> mottagit – @t.Amount @toAccount?.Currency – @t.Description
+                    @t.TimeStamp.ToShortDateString() – <strong>@t.FromAccountName</strong> överfört → <strong>@t.ToAccountName</strong> mottagit – @t.Amount @toAccount?.Currency – @t.Description
                 </li>
             }
         </ul>
