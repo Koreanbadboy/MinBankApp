@@ -86,7 +86,6 @@ else
     }
 
     // Filtrerar transaktioner så att endast de som rör valt konto visas
-    
     private IEnumerable<Transaction> FilteredTransactions =>
         _accounts.FirstOrDefault(a => a.Name == _selectedAccountName)?
             .Transactions
@@ -104,7 +103,6 @@ else
 
             if (accountToUpdate is BankAccount originalAccount)
             {
-                // KORRIGERING: Anropa rätt konstruktor med en tom transaktionslista.
                 var updatedAccount = new BankAccount(
                     originalAccount.Id,
                     originalAccount.Name,
@@ -112,7 +110,7 @@ else
                     originalAccount.Currency,
                     originalAccount.Balance,
                     DateTime.Now,
-                    new List<Transaction>() // Skicka med en ny, tom lista
+                    new List<Transaction>()
                 );
 
                 await AccountService.UpdateAccount(updatedAccount);
