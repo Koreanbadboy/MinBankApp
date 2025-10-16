@@ -76,20 +76,23 @@ else
     // Lista med alla konton
     private List<IBankAccount> _accounts = new();
     // Lista med alla transaktioner
-    private List<Transaction> _allTransactions = new();
 
     // Hämtar konton och transaktioner vid sidladdning
     protected override async Task OnInitializedAsync()
     {
         // Hämta konton asynkront
         _accounts = await AccountService.GetAccounts();
-        _allTransactions = _accounts.SelectMany(a => a.Transactions).ToList();
+        _accounts.SelectMany(a => a.Transactions).ToList();
     }
 
     // Filtrerar transaktioner så att endast de som rör valt konto visas
+    
     private IEnumerable<Transaction> FilteredTransactions =>
-        _allTransactions
-            .Where(t => t.FromAccountName == _selectedAccountName || t.ToAccountName == _selectedAccountName);
+        _accounts.FirstOrDefault(a => a.Name == _selectedAccountName)?
+            .Transactions
+            .OrderByDescending(t=> t.TimeStamp)
+            ?? Enumerable.Empty<Transaction>();
+    
 
     // Rensar historik för det valda kontot
     public async Task ClearHistoryAsync()
@@ -99,7 +102,7 @@ else
         {
             bankAccount.Transactions.Clear();
             await AccountService.UpdateAccount(bankAccount);
-            _allTransactions = _accounts.SelectMany(a => a.Transactions).ToList();
+            _accounts.SelectMany(a => a.Transactions).ToList();
             StateHasChanged();
         }
     }
