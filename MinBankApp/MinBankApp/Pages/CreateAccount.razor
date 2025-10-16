@@ -175,39 +175,48 @@ else
 </footer>
 
 @code {
+    // Modell för att binda data från formuläret för att skapa konto.
     private CreateAccountFormModel _formModel = new() { Type = AccountType.None, Currency = CurrencyType.None };
     private List<IBankAccount> _accounts = new();
     private TransactionFormModel _transactionModel = new();
 
+    // Metod som körs när komponenten initialiseras.
     protected override async Task OnInitializedAsync()
     {
+        // Hämtar alla befintliga konton från AccountService.
         _accounts = await AccountService.GetAccounts();
     }
 
+    // Metod för att asynkront skapa ett nytt konto.
     private async Task CreateAccountAsync()
     {
         try
         {
+            // Anropar AccountService för att skapa kontot med data från formuläret.
             await AccountService.CreateAccount(
                 _formModel.Name,
                 _formModel.Type,
                 _formModel.Currency,
                 _formModel.InitialBalance
             );
+            // Laddar om kontolistan för att inkludera det nya kontot.
             _accounts = await AccountService.GetAccounts();
             _formModel = new CreateAccountFormModel { Type = AccountType.None, Currency = CurrencyType.None };
             StateHasChanged();
         }
         catch (Exception ex)
         {
+            // Loggar eventuella fel till konsolen.
             Console.Error.WriteLine(ex);
         }
     }
 
+    // Metod för att asynkront radera ett konto baserat på dess ID.
     private async Task DeleteAccountAsync(Guid accountId)
     {
         try
         {
+            // Anropar AccountService för att radera kontot.
             await AccountService.DeleteAccount(accountId);
             _accounts = await AccountService.GetAccounts();
             if (selectedAccountId == accountId)
@@ -222,6 +231,7 @@ else
         }
     }
 
+    // Sträng som håller ID för det valda kontot från dropdown-listan.
     private string _selectedAccountIdString;
     private Guid? selectedAccountId
     {
@@ -233,17 +243,21 @@ else
         }
         set => _selectedAccountIdString = value?.ToString();
     }
+    // Egenskap som returnerar det fullständiga konto-objektet för det valda ID:t.
     private IBankAccount selectedAccount => _accounts.FirstOrDefault(a => a.Id == selectedAccountId);
 
+    // Metod för att hantera insättningar och uttag.
     private async Task HandleTransactionAsync()
     {
         if (selectedAccount == null) return;
 
+        // Säkerställer att det valda kontot är av typen BankAccount.
         var bankAccount = selectedAccount as BankAccount;
         if (bankAccount == null) return;
 
         try
         {
+            // Kollar om det är en insättning eller ett uttag.
             if (_transactionModel.Type == "Deposit")
             {
                 bankAccount.Deposit(_transactionModel.Amount, Guid.Empty, "Egen insättning", "Insättning");
@@ -253,6 +267,7 @@ else
                 bankAccount.Withdraw(_transactionModel.Amount, Guid.Empty, "Eget uttag", "Uttag");
             }
 
+            // Sparar ändringarna i kontot.
             await AccountService.UpdateAccount(bankAccount);
             _accounts = await AccountService.GetAccounts();
             _transactionModel = new TransactionFormModel();
@@ -260,10 +275,12 @@ else
         }
         catch (Exception ex)
         {
+            // Loggar eventuella fel, t.ex. otillräckligt saldo.
             Console.Error.WriteLine($"Transaction failed: {ex.Message}");
         }
     }
 
+    // Hjälpmetod för att returnera ett användarvänligt namn för kontotypen.
     private string GetAccountTypeName(AccountType type)
     {
         return type switch
