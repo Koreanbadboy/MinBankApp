@@ -71,11 +71,8 @@ else
 </footer>
 
 @code {
-    // Valda kontonamn för filtrering
     private string _selectedAccountName = "";
-    // Lista med alla konton
     private List<IBankAccount> _accounts = new();
-    // Lista med alla transaktioner
 
     // Hämtar konton och transaktioner vid sidladdning
     protected override async Task OnInitializedAsync()

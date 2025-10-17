@@ -15,4 +15,6 @@ public interface IBankAccount
     
     void Deposit(decimal amount, Guid fromAccountId, string fromAccountName, string description);
     void Withdraw(decimal amount, Guid toAccountId, string toAccountName, string description);
+    //void TransferTo(BankAccount account, Guid toAccountId, string description, decimal amount); // arber
+   
 }

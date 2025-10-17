@@ -1,0 +1,135 @@
+﻿@page "/Transfer"
+@using System
+@using System.Linq
+@using System.Collections.Generic
+@using MinBankApp.Interfaces
+@inject IAccountService AccountService
+
+<h3>Transfer</h3>
+
+@if (_accounts == null || _accounts.Count < 2)
+{
+    <p>Skapa minst 2 konton för att göra en transaktion.</p>
+}
+else
+{
+    <EditForm Model="_model" OnValidSubmit="OnSubmitAsync">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label>Från konto</label>
+            <InputSelect TValue="Guid" @bind-Value="_model.FromAccountId" class="form-select" @onchange="HandleFormChange">
+                <option value="@Guid.Empty">-- Välj konto --</option>
+                @foreach (var account in _accounts)
+                {
+                    <option value="@account.Id">@account.Name - Saldo: @account.Balance</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div class="mb-3">
+            <label>Till konto</label>
+            <InputSelect TValue="Guid" @bind-Value="_model.ToAccountId" class="form-select" disabled="@(_model.FromAccountId == Guid.Empty)">
+                <option value="@Guid.Empty">-- Välj konto --</option>
+                @foreach (var account in _toAccounts)
+                {
+                    <option value="@account.Id">@account.Name - Saldo: @account.Balance</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div class="mb-3">
+            <label>Belopp</label>
+            <InputNumber TValue="decimal" @bind-Value="_model.Amount" class="form-control" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Överför</button>
+    </EditForm>
+    <br />
+    <h4>Konton</h4>
+    <ul>
+        @foreach (var account in _accounts)
+        {
+            <li>@account.Name - Saldo: @account.Balance</li>
+        }
+    </ul>
+}
+
+@code {
+    private readonly TransferFormModel _model = new();
+    private List<IBankAccount> _accounts = new();
+    private List<IBankAccount> _toAccounts = new();
+
+    private class TransferFormModel
+    {
+        public Guid FromAccountId { get; set; }
+        public Guid ToAccountId { get; set; }
+        public decimal Amount { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await AccountService.GetAccounts();
+        _accounts = result ?? new List<IBankAccount>();
+        _toAccounts = _accounts.ToList();
+    }
+
+    private async Task OnSubmitAsync()
+    {
+        if (_model.FromAccountId == Guid.Empty || _model.ToAccountId == Guid.Empty || _model.Amount <= 0)
+        {
+            // Enkel validering för att säkerställa att allt är ifyllt
+            return;
+        }
+
+        try
+        {
+            AccountService.transfer(_model.FromAccountId, _model.ToAccountId, _model.Amount);
+
+            // Ladda om konton för att visa uppdaterat saldo
+            var result = await AccountService.GetAccounts();
+            _accounts = result ?? new List<IBankAccount>();
+            
+            // Nollställ formuläret
+            _model.Amount = 0;
+            _model.FromAccountId = Guid.Empty;
+            _model.ToAccountId = Guid.Empty;
+            
+            // Uppdatera "Till konto"-listan
+            _toAccounts = _accounts.ToList();
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    private void HandleFormChange(ChangeEventArgs e)
+    {
+        if (Guid.TryParse(e.Value?.ToString(), out var fromId))
+        {
+            OnFormChange(fromId);
+        }
+    }
+
+    private void OnFormChange(Guid fromId)
+    {
+        _model.FromAccountId = fromId;
+        
+        if (fromId != Guid.Empty)
+        {
+            // Ta bort det valda "från"-kontot från listan över möjliga "till"-konton
+            _toAccounts = _accounts.Where(acc => acc.Id != fromId).ToList();
+        }
+        else
+        {
+            _toAccounts = _accounts.ToList();
+        }
+        
+        _model.ToAccountId = Guid.Empty; // Nollställ "till"-kontot
+        StateHasChanged();
+    }
+}

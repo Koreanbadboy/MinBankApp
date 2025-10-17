@@ -59,10 +59,32 @@ public class AccountService : IAccountService
             await SaveAsync();
         }
     }
-public async Task<IBankAccount?> GetAccountById(Guid accountId)
+public async Task<IBankAccount?> GetAccountById(Guid accountId) // arber
     {
         await IsInitialized();
         return _accounts.FirstOrDefault(a => a.Id == accountId);
     }
-    
+
+    public async void transfer(Guid fromAccountId, Guid toAccountId, decimal amount)
+    {
+        await IsInitialized();
+
+        var fromAccount = _accounts.FirstOrDefault(a => a.Id == fromAccountId) as BankAccount;
+        var toAccount = _accounts.FirstOrDefault(a => a.Id == toAccountId) as BankAccount;
+
+        if (fromAccount == null || toAccount == null)
+        {
+            throw new InvalidOperationException("Ett eller båda kontona hittades inte.");
+        }
+
+        if (fromAccount.Balance < amount)
+        {
+            throw new InvalidOperationException("Inte tillräckligt med pengar på kontot.");
+        }
+
+        fromAccount.Withdraw(amount, toAccountId, toAccount.Name, $"Transfer to {toAccount.Name}");
+        toAccount.Deposit(amount, fromAccountId, fromAccount.Name, $"Transfer from {fromAccount.Name}");
+
+        await SaveAsync();
+    }
 }

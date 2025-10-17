@@ -21,15 +21,13 @@ else
 {
     <!-- Formulär för att hantera överföringen, kopplat till _transferModel -->
     <EditForm Model="_transferModel" OnValidSubmit="TransferAsync">
-        <!-- Aktiverar validering baserat på data-attribut (t.ex. [Required]) -->
+        <!--data-attribut [Required]) -->
         <DataAnnotationsValidator />
-        <!-- Visar en sammanfattning av alla valideringsfel -->
         <ValidationSummary />
 
         <!-- Dropdown för att välja "Från konto" -->
         <div class="mb-3" style="max-width: 400px;">
             <label for="fromAccount" class="form-label">Från konto</label>
-            <!-- Tvåvägsbindning till _transferModel.FromAccountName -->
             <InputSelect id="fromAccount" class="form-select" style="max-width: 100%;" @bind-Value="_transferModel.FromAccountName">
                 <option value="">Välj konto...</option>
                 <!-- Loopar igenom alla konton och skapar ett alternativ för varje -->
@@ -208,16 +206,12 @@ else
     // Klass som representerar datamodellen för överföringsformuläret
     public class TransferModel
     {
-        // Valideringsregel: Kräver att ett "från-konto" väljs
         [Required(ErrorMessage = "Välj ett konto att överföra från.")]
         public string FromAccountName { get; set; } = "";
-        // Valideringsregel: Kräver att ett "till-konto" väljs
         [Required(ErrorMessage = "Välj ett konto att överföra till.")]
         public string ToAccountName { get; set; } = "";
-        // Valideringsregel: Kräver att beloppet är större än noll
         [Range(0.01, (double)decimal.MaxValue, ErrorMessage = "Beloppet måste vara större än noll.")]
         public decimal Amount { get; set; }
-        // Beskrivning (valfri)
         public string Description { get; set; } = "";
     }
 }

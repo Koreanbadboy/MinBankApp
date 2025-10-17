@@ -11,7 +11,8 @@ public class BankAccount : IBankAccount
     public CurrencyType Currency { get; private set; }
     public decimal Balance { get; private set; }
     public DateTime LastUpdated { get; private set; }
-    private List<Transaction> _transactions = new List<Transaction>();
+    //private List<Transaction> _transactions = new List<Transaction>(); // egen
+    private readonly List<Transaction> _transactions = new List<Transaction>(); // arber
 
     public List<Transaction> Transactions => _transactions;
 

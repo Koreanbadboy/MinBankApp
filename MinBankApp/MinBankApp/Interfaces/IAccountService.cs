@@ -10,4 +10,6 @@ public interface IAccountService
     Task UpdateAccount(BankAccount account);
     Task<IBankAccount?> GetAccountById(Guid accountId);
     
+    void transfer(Guid fromAccountId, Guid toAccountId, decimal amount); // arber
+    
 }
